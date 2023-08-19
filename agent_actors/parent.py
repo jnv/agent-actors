@@ -3,6 +3,7 @@ from pprint import pprint
 from typing import List
 
 import ray
+from langchain import LLMChain
 from langchain.schema import AgentAction, AgentFinish
 from pydantic import Field
 
@@ -14,7 +15,7 @@ from agent_actors.models import TaskRecord
 
 class ParentAgent(Agent):
     plan: Plan = Field(init=False)
-    adjust: Adjust = Field(init=False)
+    adjust: LLMChain = Field(init=False)
 
     def __init__(self, *args, **kwargs):
         chain_params = dict(
