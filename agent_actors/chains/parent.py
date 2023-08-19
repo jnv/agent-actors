@@ -1,6 +1,8 @@
 from textwrap import dedent
 
 from langchain import LLMChain, PromptTemplate
+from langchain.chains.openai_functions import create_structured_output_chain
+from pydantic import BaseModel, Field
 
 from agent_actors.chains.base import JSONChain
 
@@ -53,34 +55,32 @@ class Plan(JSONChain):
         )
 
 
-class Adjust(JSONChain):
+class AdjustOutput(BaseModel):
+    confidence: int = Field(
+        ..., description="The confidence of having completed the task between 1 and 10"
+    )
+    speak: str = Field(..., description="What to say to your copilot")
+    result: str = Field(..., description="Synthesized result satisfying objective")
+
+
+class Adjust():
     @classmethod
     def from_llm(cls, **kwargs) -> LLMChain:
-        return cls(
-            **kwargs,
-            prompt=PromptTemplate.from_template(
-                template_format="jinja2",
-                template=dedent(
-                    """\
-                    {{ context }}
+        prompt = PromptTemplate.from_template(
+            template_format="jinja2",
+            template=dedent(
+                """\
+                {{ context }}
 
-                    You are an continuous-improvement AI that reviews tasks completed by agents and decides what to do next.
+                You are an continuous-improvement AI that reviews tasks completed by agents and decides what to do next.
 
-                    The task of these tasks was: {{ task }}
+                The task of these tasks was: {{ task }}
 
-                    The results were:
-                    {{ results }}
+                The results were:
+                {{ results }}
 
-                    Based on these results, imagine your confidence of having completed the task as a number between 1 and 10. Return just the JSON in the following format:
-
-                    ```
-                    {
-                        "confidence": confidence,
-                        "speak": "<what to say to your copilot>",
-                        "result": <synthesized result satisfying objective>
-                    }
-                    ```
-                    """
-                ),
+                Based on these results, imagine your confidence of having completed the task as a number between 1 and 10.
+                """
             ),
         )
+        return create_structured_output_chain(AdjustOutput, **kwargs, prompt=prompt)

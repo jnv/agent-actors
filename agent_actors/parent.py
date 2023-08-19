@@ -114,8 +114,8 @@ class ParentAgent(Agent):
                 results="\n".join(task_results),
             )
 
-            if adjustment["confidence"] >= 8:
-                return AgentFinish(adjustment, "success")
+            if adjustment.confidence >= 8:
+                return AgentFinish(dict(adjustment), "success")
 
             return AgentAction("Human", "What should my next task be?", "info")
         finally:
